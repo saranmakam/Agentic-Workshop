@@ -1,0 +1,14 @@
+- id: "1"
+  title: Triage decision schema
+  description: >-
+    Cover CAP-1: accept a triage decision only as a JSON object with category,
+    priority, route, and a one-sentence rationale. Reject any other shape with
+    an error that states what is wrong, with no network calls, API keys, agent,
+    or user interface.
+- id: "2"
+  title: Seed loader
+  description: >-
+    Cover CAP-2 after the schema: uv run python load_seed.py loads the seed
+    CSVs into app.db tables tickets and customers without modifying seed/ or
+    calling the network. A second run leaves both tables identical, with the
+    columns mcp/triage_server.py already queries.
