@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 
 class Category(str, Enum):
@@ -33,18 +33,25 @@ class Route(str, Enum):
 
 
 _SENTENCE_END = frozenset(".!?")
+_ABBREVIATION = re.compile(
+    r"\b(?:Dr|Mr|Mrs|Ms|Prof|Sr|Jr|vs|etc|e\.g|i\.e)\.",
+    re.IGNORECASE,
+)
 
 
 def _is_one_sentence(text: str) -> bool:
     stripped = text.strip()
     if not stripped or stripped[-1] not in _SENTENCE_END:
         return False
-    # Exactly one sentence terminator, at the end.
-    return not re.search(r"[.!?](?!$)", stripped)
+    masked = re.sub(r"(?<=\d)\.(?=\d)", "·", stripped)
+    masked = _ABBREVIATION.sub(lambda match: match.group(0).replace(".", "·"), masked)
+    return not re.search(r"[.!?](?!$)", masked)
 
 
 class TriageDecision(BaseModel):
     """A triage decision accepted by Epic 1 CAP-1."""
+
+    model_config = ConfigDict(extra="forbid")
 
     category: Category
     priority: Priority

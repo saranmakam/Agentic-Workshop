@@ -3,6 +3,8 @@
 import sqlite3
 from pathlib import Path
 
+import load_seed as load_seed_module
+import pytest
 from load_seed import CUSTOMERS_COLUMNS, TICKETS_COLUMNS, load_seed
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -47,6 +49,16 @@ def test_load_seed_does_not_modify_seed_files(tmp_path: Path) -> None:
     load_seed(db_path=tmp_path / "app.db", seed_dir=SEED)
     assert (SEED / "tickets.csv").read_bytes() == tickets_before
     assert (SEED / "customers.csv").read_bytes() == customers_before
+
+
+def test_main_loads_repo_defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    db_path = tmp_path / "app.db"
+    monkeypatch.setattr(load_seed_module, "DB_PATH", db_path)
+    monkeypatch.setattr(load_seed_module, "SEED_DIR", SEED)
+    load_seed_module.main()
+    with sqlite3.connect(db_path) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM tickets").fetchone()[0] == 24
+        assert conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0] == 20
 
 
 def test_load_seed_matches_mcp_query_shape(tmp_path: Path) -> None:
